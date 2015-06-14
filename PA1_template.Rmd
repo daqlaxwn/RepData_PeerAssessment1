@@ -1,25 +1,75 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "RepData_PeerAssessment1"
+author: "daqlaxwn"
+date: "Sunday, June 14, 2015"
+output: html_document
 ---
 
+Loading and preprocessing the data
+```{r, echo=TRUE}
+tmp <- read.csv("./activity.csv")
+```
 
-## Loading and preprocessing the data
+What is mean total number of steps taken per day?
+```{r, echo=TRUE}
+totalsteps <- with(tmp, aggregate(steps ~ date, FUN=sum, na.rm=TRUE))
+attach(totalsteps)
+hist(steps)
+cat("The mean of the total number of steps taken per day is", mean(steps))
+cat("The median of the total number of steps taken per day is", median(steps))
+detach(totalsteps)
+```
+
+What is the average daily activity pattern?
+```{r, echo=TRUE}
+meansteps <- with(tmp, aggregate(steps ~ interval, FUN=mean, na.rm=TRUE))
+attach(meansteps)
+plot(interval, steps, type="l")
+cat("5-minute interval", meansteps[steps==max(steps),1], "on average across all the days in the dataset, contains the maximum number of steps")
+detach(meansteps)
+```
+
+Imputing missing values
+```{r, echo=TRUE}
+cat("The total number of missing values in the dataset is", sum(is.na(tmp$steps)))
+##create a new dataset
+tmp1 <- tmp
+##relace NA with mean steps of each interval across all the days
+for(i in which(is.na(tmp1$steps))) {
+    tmp1[i,1] <- meansteps[meansteps$interval==tmp1[i,3],2]
+    }
+
+##calculate total number of steps taken per day
+totalsteps1 <- with(tmp1, aggregate(steps ~ date, FUN=sum, na.rm=TRUE))
+attach(totalsteps1)
+hist(steps)
+cat("The mean of the total number of steps taken per day is", mean(steps))
+cat("The median of the total number of steps taken per day is", median(steps))
+detach(totalsteps1)
+
+## Because I use the replace NA with mean steps of each interval across all the days,
+## the mean total number of steps taken per day keeps the same as the value from the first part of ## the assignment but the median is larger.
+
+## What is the impact of imputing missing data on the estimates of the total daily number of steps?
+## It's hard to say. It depends on the method used for replacing NA.
+```
+
+Are there differences in activity patterns between weekdays and weekends?
+```{r, echo=TRUE}
+for(i in 1:nrow(tmp1)) {
+    if (weekdays(as.Date(tmp[i,2],"%Y-%m-%d")) %in% c("ÐÇÆÚÁù","ÐÇÆÚÈÕ")) {
+        tmp1$weektype[i] <- "weekdend"
+    }   else {
+        tmp1$weektype[i] <- "weekday"
+    }
+}
+tmp1$weektype <- as.factor(tmp1$weektype)
+
+meansteps1 <- with(tmp1, aggregate(steps ~ interval + weektype, FUN=mean))
+library(ggplot2)
+qplot(interval, steps, data=meansteps1, facets=.~weektype, geom="line")
+```
 
 
 
-## What is mean total number of steps taken per day?
 
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
